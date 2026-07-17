@@ -176,6 +176,22 @@
   
 
   <script>
+
+        // =====================================================
+    // SERVER CONFIGURATION - UPDATED FOR RENDER
+    // =====================================================
+    // Detect if running locally or on production
+    const isLocal = window.location.hostname === 'localhost' || 
+                    window.location.hostname === '127.0.0.1' ||
+                    window.location.hostname === '';
+
+    // Use Render URL in production, localhost in development
+    const SERVER_URL = isLocal 
+        ? 'http://localhost:3000' 
+        : 'https://resumatriix-backend.onrender.com';
+
+    console.log(`🚀 Environment: ${isLocal ? 'Development' : 'Production'}`);
+    console.log(`🌐 Server URL: ${SERVER_URL}`);
     // --- Initial Constants & Application State Structure ---
     // --- Initial Constants & Application State Structure ---
     const SECTIONS = [
