@@ -8,25 +8,19 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // =============================================
-// CORS CONFIGURATION - FIX FOR DEPLOYMENT
+// CORS CONFIGURATION
 // =============================================
-// Allow multiple origins (your frontend domains)
 const allowedOrigins = [
-    'https://resumatriix.onrender.com',          // Your Render frontend
-    'https://resumatriix-backend.onrender.com',  // Your Render backend
+    'https://resumatriix.onrender.com',
+    'https://resumatriix-backend.onrender.com',
     'http://localhost:3000',
     'http://localhost:5500',
-    'http://127.0.0.1:5500',
-    'http://localhost:8080',
-    'http://localhost:5000'
+    'http://127.0.0.1:5500'
 ];
 
-// Option 1: Specific origins (RECOMMENDED for production)
 app.use(cors({
     origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
-        
         if (allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
@@ -39,27 +33,30 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 
-// Option 2: Allow all origins (QUICK FIX - less secure)
-// app.use(cors({
-//     origin: '*',
-//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-//     allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
-// }));
-
-// Middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('.'));
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Health check endpoint
+// ✅ HEALTH CHECK ENDPOINT - MUST BE BEFORE app.listen()
 app.get('/api/health', (req, res) => {
     res.json({ 
         status: 'ok', 
         timestamp: new Date().toISOString(),
-        cors: 'enabled',
-        allowedOrigins: allowedOrigins
+        message: 'Server is running!',
+        cors: 'enabled'
+    });
+});
+
+// ✅ ROOT ENDPOINT - Optional but helpful
+app.get('/', (req, res) => {
+    res.json({
+        message: 'Resume Matrix API is running',
+        endpoints: {
+            health: '/api/health',
+            parseResume: '/api/parse-resume (POST)'
+        }
     });
 });
 
@@ -76,7 +73,6 @@ app.post('/api/parse-resume', async (req, res) => {
             return res.status(400).json({ error: 'Resume text is empty' });
         }
 
-        // Parse resume using Gemini
         const parsedData = await parseResumeWithAI(resumeText);
         res.json(parsedData);
 
@@ -141,12 +137,10 @@ Return ONLY the JSON, no other text.
         const response = await result.response;
         let json = response.text();
         
-        // Clean up the response
         json = json.replace(/```json/g, "");
         json = json.replace(/```/g, "");
         json = json.trim();
 
-        // Validate JSON
         try {
             const parsed = JSON.parse(json);
             return parsed;
