@@ -39,7 +39,24 @@ app.use(express.static('.'));
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// ✅ HEALTH CHECK ENDPOINT - MUST BE BEFORE app.listen()
+// =============================================
+// ROUTES
+// =============================================
+
+// ✅ ROOT ROUTE - This fixes the 404 error
+app.get('/', (req, res) => {
+    res.json({
+        status: 'online',
+        message: 'Resume Matrix API is running',
+        endpoints: {
+            health: '/api/health',
+            parseResume: '/api/parse-resume (POST)'
+        },
+        timestamp: new Date().toISOString()
+    });
+});
+
+// ✅ HEALTH CHECK
 app.get('/api/health', (req, res) => {
     res.json({ 
         status: 'ok', 
@@ -49,18 +66,7 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// ✅ ROOT ENDPOINT - Optional but helpful
-app.get('/', (req, res) => {
-    res.json({
-        message: 'Resume Matrix API is running',
-        endpoints: {
-            health: '/api/health',
-            parseResume: '/api/parse-resume (POST)'
-        }
-    });
-});
-
-// Parse resume endpoint
+// ✅ PARSE RESUME
 app.post('/api/parse-resume', async (req, res) => {
     try {
         const { resumeText } = req.body;
@@ -82,6 +88,9 @@ app.post('/api/parse-resume', async (req, res) => {
     }
 });
 
+// =============================================
+// AI PARSING FUNCTION
+// =============================================
 async function parseResumeWithAI(resumeText) {
     const prompt = `
 Extract the resume information and return ONLY valid JSON with this exact structure:
@@ -154,6 +163,9 @@ Return ONLY the JSON, no other text.
     }
 }
 
+// =============================================
+// START SERVER
+// =============================================
 app.listen(port, () => {
     console.log(`🚀 Server running on port ${port}`);
     console.log(`📝 Health check: /api/health`);
